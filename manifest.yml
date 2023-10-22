@@ -1,0 +1,20 @@
+modules:
+  jira:issuePanel:
+    - key: figma-updates-hello-world-panel
+      function: main
+      title: figma updates
+      icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
+  function:
+    - key: main
+      handler: index.run
+app:
+  id: ari:cloud:ecosystem::app/bdf91e7b-29c7-42ba-8434-a190b8487bfd
+permissions:
+  external:
+    fetch:
+      backend:
+        - "*.ai21.com"
+        - "*.figma.com"
+  scopes:
+    - "read:jira-work"
+    - "write:jira-work"
