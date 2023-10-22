@@ -12,21 +12,104 @@ import ForgeUI, {
   Text,
   IssuePanel,
   useProductContext,
-  useConfig,
+  Link,
+  ModalDialog,
 } from "@forge/ui";
+import api, { route, fetch, storage } from "@forge/api";
 
-import api, { route, fetch } from "@forge/api";
+const NewSet = ({ figma, talkAi }) => {
+  const [mopen, setMopen] = useState(false);
 
+  const newApis = async (formData) => {
+    const figmaToken = formData?.figmaToken;
+    const aiToken = formData?.aiToken;
+
+    if (figmaToken) {
+      await storage.set("figma", { value: figmaToken });
+    }
+    if (aiToken) {
+      await storage.set("ai", { value: aiToken });
+    }
+  };
+
+  return (
+    <Fragment>
+      <Button text="settings" onClick={() => setMopen(true)} appearance="subtle-link" />
+      {mopen && (
+        <ModalDialog
+          header="Replace with your own api keys"
+          onClose={() => setMopen(false)}
+        >
+          <Form onSubmit={newApis}>
+            <TextField
+              name="figmaToken"
+              label={
+                figma
+                  ? "Replace existing figma API key"
+                  : "Enter a new Figma Token"
+              }
+            />
+            <TextField
+              name="aiToken"
+              label={
+                talkAi
+                  ? "Replace existing Ai21 Labs API key"
+                  : "Enter a new Ai21 API key"
+              }
+            />
+            {figma ? (
+              <Text>Figma API was already set</Text>
+            ) : (
+              <Text>
+                How to get your own Figma Key:{" "}
+                <Link
+                  href="https://www.figma.com/developers/api"
+                  openNewTab={true}
+                >
+                  Learn More
+                </Link>
+              </Text>
+            )}
+            {talkAi ? (
+              <Text>An Ai21 Labs API key was already set</Text>
+            ) : (
+              <Text>
+                How to get your own Ai21 Key:{" "}
+                <Link href="https://www.ai21.com/" openNewTab={true}>
+                  Learn More
+                </Link>{" "}
+              </Text>
+            )}
+          </Form>
+        </ModalDialog>
+      )}
+    </Fragment>
+  );
+};
 const App = () => {
   // useState is a UI kit hook we use to manage the form data in local state
   const [formState, setFormState] = useState(undefined);
   const [prompt, setPrompt] = useState("");
   const { platformContext } = useProductContext();
-  const aiTwentyOneToken = process.env.twenty;
+  const aiTwentyOneToken = gettaAi ? gettaAi : process.env.twenty;
   const [success, setSuccess] = useState(false);
   const [figmaData, setFigmaData] = useState(null);
   const [getFigma, setGetFigma] = useState("");
   const [title, setTitle] = useState("");
+
+  const [gettaFigma, setGettaFigma] = useState(false);
+  const [gettaAi, setGettaAi] = useState(false);
+
+  useEffect(async () => {
+    const getFigma = await storage.get("figma");
+    const getAi = await storage.get("ai");
+    if (getFigma?.value) {
+      setGettaFigma(getFigma.value);
+    }
+    if (getAi?.value) {
+      setGettaAi(getAi.value);
+    }
+  }, []);
 
   useEffect(async () => {
     const apiData = await api
@@ -48,9 +131,10 @@ const App = () => {
 
   useEffect(async () => {
     if (getFigma) {
+      const figmaToi = gettaFigma ? gettaFigma : process.env.figma;
       const obbb = await fetch(`https://api.figma.com/v1/files/${getFigma}`, {
         headers: {
-          "X-Figma-Token": process.env.figma,
+          "X-Figma-Token": figmaToi,
         },
       })
         .then((res) => res.json())
@@ -195,18 +279,23 @@ const App = () => {
           actionButtons={moreButtons}
           submitButtonText="Apply to Description"
         >
-          <SectionMessage 
-          title="Your prompt has given you..."
-          children="true"
-          appearance="change"><Text>{formState}</Text></SectionMessage>
+          <SectionMessage
+            title="Your prompt has given you..."
+            children="true"
+            appearance="change"
+          >
+            <Text>{formState}</Text>
+          </SectionMessage>
           {success && (
-            <SectionMessage appearance="confirmation"><Text>Your new description was applied. Please refresh</Text></SectionMessage>
+            <SectionMessage appearance="confirmation">
+              <Text>Your new description was applied. Please refresh</Text>
+            </SectionMessage>
           )}
         </Form>
       ) : (
         <Fragment>
           <Form onSubmit={onSubmit} submitButtonText="Generate">
-            <TextField
+            <TextArea
               name="prompt"
               defaultValue={title}
               value={title}
@@ -215,6 +304,8 @@ const App = () => {
               label="What would you like your user story to be about?"
             />
           </Form>
+
+          <NewSet figma={gettaFigma} talkAi={gettaAi} />
         </Fragment>
       )}
     </Fragment>
