@@ -1,8 +1,9 @@
 modules:
   jira:issuePanel:
-    - key: figma-updates-hello-world-panel
+    - key: magic-stories-panel
       function: main
-      title: figma updates
+      title: Magic Stories
+      description: Generate User Stories
       icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
   function:
     - key: main
@@ -15,6 +16,7 @@ permissions:
       backend:
         - "*.ai21.com"
         - "*.figma.com"
+        - "*.openai.com"
   scopes:
     - "read:jira-work"
     - "write:jira-work"

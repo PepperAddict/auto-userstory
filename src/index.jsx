@@ -6,6 +6,7 @@ import ForgeUI, {
   TextField,
   Macro,
   TextArea,
+  SectionMessage,
   useEffect,
   useState,
   Text,
@@ -25,46 +26,58 @@ const App = () => {
   const [success, setSuccess] = useState(false);
   const [figmaData, setFigmaData] = useState(null);
   const [getFigma, setGetFigma] = useState("");
+  const [title, setTitle] = useState("");
+
+  useEffect(async () => {
+    const apiData = await api
+      .asUser()
+      .requestJira(route`/rest/api/2/issue/${platformContext.issueKey}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        return res.json();
+      })
+      .then((response) => {
+        setTitle(response.fields.summary);
+      });
+  }, []);
 
   useEffect(async () => {
     if (getFigma) {
-      console.log(getFigma);
-      const token = process.env.figma;
       const obbb = await fetch(`https://api.figma.com/v1/files/${getFigma}`, {
         headers: {
           "X-Figma-Token": process.env.figma,
         },
-      }).then(res => res.json()).then((res) => {
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          const figmaFile = "https://figma.com/file/" + getFigma;
+          if (res) {
+          }
 
-
-        const figmaFile = "https://figma.com/file/" + getFigma;
-        if (res) {
-
-        }
-
-        const figmaObject = {
-
+          const figmaObject = {
             id: getFigma,
             name: res.name,
             lastModified: res.lastModified,
             url: figmaFile,
             thumbnail: res.thumbnailUrl,
-
-        }
-      setFigmaData(figmaObject)
-        return figmaObject
-      });
-      
+          };
+          setFigmaData(figmaObject);
+          return figmaObject;
+        });
     }
   }, [getFigma]);
-
 
   // Handles form submission, which is a good place to call APIs, or to set component state...
   const onSubmit = async (formData) => {
     const splitApartText = formData.prompt.split(" ");
     let newPrompt = formData.prompt;
     if (splitApartText.length > 0) {
-      const newText = splitApartText.map( (apart, i) => {
+      const newText = splitApartText.map((apart, i) => {
         if (apart.includes("www.figma.com/file")) {
           const id = apart.split("/")[4];
           setGetFigma(id);
@@ -97,8 +110,6 @@ const App = () => {
       .then((data) => {
         setFormState(data.completions[0].data.text);
       });
-
-
   };
 
   const goBack = async (formData) => {
@@ -119,7 +130,6 @@ const App = () => {
       });
 
     const acceptanceCriteria = formState.split("Acceptance Criteria:", 2);
-    
 
     var bodyData = JSON.stringify({
       fields: {
@@ -132,23 +142,27 @@ const App = () => {
       ${acceptanceCriteria[0]} 
       {panel}
 
-      ${typeof acceptanceCriteria[1] !== 'undefined' &&
+      ${
+        typeof acceptanceCriteria[1] !== "undefined" &&
         `{panel:bgColor=#e3fcef}
       *ACCEPTANCE CRITERIA*:
       ${acceptanceCriteria[1]}
       {panel}`
       }
 
-      ${figmaData ? `
+      ${
+        figmaData
+          ? `
         {panel:bgColor=#eae6ff} 
         *DESIGN ASSET*: 
         ${figmaData.name} 
         !${figmaData.thumbnail}!
         LINK: ${figmaData.url}
         Last Modified: ${figmaData.lastModified}
-        {panel}` : ''
+        {panel}`
+          : ""
       }
-      ${apiData}`,
+      ${apiData && apiData}`,
       },
     });
 
@@ -181,16 +195,23 @@ const App = () => {
           actionButtons={moreButtons}
           submitButtonText="Apply to Description"
         >
-          <Text>{formState}</Text>
+          <SectionMessage 
+          title="Your prompt has given you..."
+          children="true"
+          appearance="change"><Text>{formState}</Text></SectionMessage>
           {success && (
-            <Text>Your new description was applied. Please refresh</Text>
+            <SectionMessage appearance="confirmation"><Text>Your new description was applied. Please refresh</Text></SectionMessage>
           )}
         </Form>
       ) : (
         <Fragment>
-          <Form onSubmit={onSubmit} submitButtonText="Generate a user story">
+          <Form onSubmit={onSubmit} submitButtonText="Generate">
             <TextField
               name="prompt"
+              defaultValue={title}
+              value={title}
+              type="text"
+              autoComplete="true"
               label="What would you like your user story to be about?"
             />
           </Form>
