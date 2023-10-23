@@ -34,7 +34,7 @@ const NewSet = ({ figma, talkAi }) => {
 
   return (
     <Fragment>
-      <Button text="settings" onClick={() => setMopen(true)} appearance="subtle-link" />
+      <Button text="" onClick={() => setMopen(true)} appearance="subtle-link" icon="settings" />
       {mopen && (
         <ModalDialog
           header="Replace with your own api keys"
@@ -91,7 +91,7 @@ const App = () => {
   const [formState, setFormState] = useState(undefined);
   const [prompt, setPrompt] = useState("");
   const { platformContext } = useProductContext();
-  const aiTwentyOneToken = gettaAi ? gettaAi : process.env.twenty;
+  
   const [success, setSuccess] = useState(false);
   const [figmaData, setFigmaData] = useState(null);
   const [getFigma, setGetFigma] = useState("");
@@ -99,6 +99,7 @@ const App = () => {
 
   const [gettaFigma, setGettaFigma] = useState(false);
   const [gettaAi, setGettaAi] = useState(false);
+
 
   useEffect(async () => {
     const getFigma = await storage.get("figma");
@@ -173,6 +174,7 @@ const App = () => {
     }
 
     setPrompt(formData.prompt);
+    const aiTwentyOneToken = gettaAi ? gettaAi : process.env.twenty;
     await fetch("https://api.ai21.com/studio/v1/j2-ultra/complete", {
       method: "POST",
       headers: {
